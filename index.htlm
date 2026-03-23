@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Ninja Pro | Long Equations</title>
+    <style>
+        :root {
+            --primary: #00d2ff; --secondary: #3a7bd5; --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7); --accent: #f59e0b;
+            --success: #22c55e; --danger: #ef4444;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; background: radial-gradient(circle at top, #1e293b, #0f172a);
+            color: white; font-family: 'Segoe UI', sans-serif; height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .header {
+            background: var(--card-bg); backdrop-filter: blur(15px); padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 100;
+        }
+        .logo-text { font-weight: 900; color: var(--primary); font-size: 1.1rem; }
+        .coin-pill { background: rgba(245, 158, 11, 0.2); color: var(--accent); padding: 6px 15px; border-radius: 30px; border: 1px solid var(--accent); font-weight: bold; }
+        .container { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
+        .glass-card {
+            background: var(--card-bg); backdrop-filter: blur(20px); border-radius: 25px;
+            padding: 25px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;
+            animation: slideIn 0.4s ease-out; text-align: center;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .level-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .lvl-btn {
+            aspect-ratio: 1; background: rgba(255,255,255,0.05); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .lvl-unlocked { border-color: var(--primary); color: var(--primary); }
+        .lvl-current { background: var(--primary); color: white; box-shadow: 0 0 15px var(--primary); }
+        .lvl-locked { opacity: 0.2; }
+        .puzzle-box { font-size: 1.5rem; margin: 20px 0; background: rgba(0,0,0,0.4); padding: 25px; border-radius: 20px; color: #fff; font-family: 'Courier New', monospace; line-height: 1.4; word-break: break-all; }
+        input {
+            width: 100%; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1);
+            padding: 15px; border-radius: 15px; color: white; font-size: 1.5rem; text-align: center; margin-bottom: 15px;
+        }
+        .btn { padding: 15px; border-radius: 15px; border: none; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-main { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-share { background: #25d366; color: white; margin-top: 15px; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); }
+        .btn-outline { background: transparent; border: 1px solid var(--danger); color: var(--danger); margin-top: 10px; }
+        nav { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { flex: 1; text-align: center; font-size: 0.75rem; color: #64748b; }
+        .nav-item.active { color: var(--primary); }
+        .tab { display: none; }
+        .tab.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-text">MATH NINJA PRO</div>
+        <div class="coin-pill" id="coin-count">💰 0</div>
+    </div>
+
+    <div class="container">
+        <div id="tab-home" class="tab active">
+            <div class="glass-card">
+                <div style="font-size: 3.5rem; margin-bottom: 10px;">🧠</div>
+                <h2 style="margin: 0;">Hi, Vishal!</h2>
+                <p style="color: #94a3b8; margin: 10px 0 20px;">Upgrade your brainpower with the ultimate Maths Puzzle Challenge. 🚀</p>
+                <button class="btn btn-main" onclick="switchTab('levels')">Play Levels</button>
+                <button class="btn btn-share" onclick="shareChallenge()">Share Challenge 📢</button>
+            </div>
+            <div class="glass-card">
+                <h3>Daily Gift</h3>
+                <button class="btn btn-main" style="background: var(--accent);" onclick="claimDaily()">Claim 50 Coins</button>
+            </div>
+        </div>
+
+        <div id="tab-levels" class="tab">
+            <h3 style="margin-bottom: 15px;">Elite Missions</h3>
+            <div class="level-grid" id="level-container"></div>
+        </div>
+
+        <div id="tab-game" class="tab">
+            <div class="glass-card">
+                <div id="game-lvl-tag" style="color:var(--primary); font-size: 0.8rem; font-weight: bold;">LEVEL 1</div>
+                <div class="puzzle-box" id="puzzle-text">?</div>
+                <input type="number" id="ans-input" placeholder="Type Answer..." pattern="\d*">
+                <button class="btn btn-main" onclick="checkAnswer()">Verify Answer</button>
+                <button class="btn btn-outline" onclick="skipLevel()">Skip (100 💰)</button>
+            </div>
+        </div>
+
+        <div id="tab-profile" class="tab">
+            <div class="glass-card">
+                <h3>Statistics</h3>
+                <p>Levels Completed: <b id="stat-lvl" style="color:var(--primary)">0</b></p>
+                <button class="btn btn-outline" onclick="resetGame()">Reset Game Data</button>
+            </div>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-item active" onclick="switchTab('home')">🏠<br>Home</div>
+        <div class="nav-item" onclick="switchTab('levels')">🏆<br>Levels</div>
+        <div class="nav-item" onclick="switchTab('profile')">👤<br>User</div>
+    </nav>
+
+    <script>
+        let state = JSON.parse(localStorage.getItem('math_ninja_long_v7')) || { coins: 100, maxLvl: 1, lastDaily: 0 };
+        let currentLvl = 1, correctAnswer = 0;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(type) {
+            try {
+                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(type === 'win' ? 600 : 200, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {}
+        }
+
+        function save() {
+            localStorage.setItem('math_ninja_long_v7', JSON.stringify(state));
+            document.getElementById('coin-count').innerText = `💰 ${state.coins}`;
+            document.getElementById('stat-lvl').innerText = state.maxLvl - 1;
+        }
+
+        function switchTab(id) {
+            playSfx('click');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('tab-' + id).classList.add('active');
+            if(id === 'levels') renderLevels();
+            
+            const navItems = document.querySelectorAll('.nav-item');
+            if(id === 'home') navItems[0].classList.add('active');
+            if(id === 'levels') navItems[1].classList.add('active');
+            if(id === 'profile') navItems[2].classList.add('active');
+        }
+
+        function renderLevels() {
+            const container = document.getElementById('level-container');
+            container.innerHTML = '';
+            for(let i=1; i<=100; i++) {
+                let status = i < state.maxLvl ? 'lvl-unlocked' : (i === state.maxLvl ? 'lvl-current' : 'lvl-locked');
+                let div = document.createElement('div');
+                div.className = `lvl-btn ${status}`;
+                div.innerText = i;
+                div.onclick = () => { if(i <= state.maxLvl) startLevel(i); };
+                container.appendChild(div);
+            }
+        }
+
+        // --- LONG EQUATION GENERATOR ---
+        function startLevel(n) {
+            currentLvl = n; switchTab('game');
+            document.getElementById('game-lvl-tag').innerText = `LEVEL ${n}`;
+            document.getElementById('ans-input').value = '';
+            let display = document.getElementById('puzzle-text');
+            
+            let a = Math.floor(Math.random() * 10) + n;
+            let b = Math.floor(Math.random() * 5) + 2;
+            let c = Math.floor(Math.random() * 10) + 5;
+            let d = (n > 20) ? Math.floor(Math.random() * 5) + 2 : 0;
+
+            if (n <= 15) {
+                // Medium Long: (a * b) + c - n
+                display.innerText = `(${a} x ${b}) + ${c} - ${n} = ?`;
+                correctAnswer = (a * b) + c - n;
+            } else if (n <= 40) {
+                // Long: (a * b) - (c + d) + 20
+                display.innerText = `(${a} x ${b}) - (${c} + ${d}) + 25 = ?`;
+                correctAnswer = (a * b) - (c + d) + 25;
+            } else if (n <= 70) {
+                // Advanced: Square + Multi + Sub
+                let sq = Math.floor(n/10) + 2;
+                display.innerText = `${sq}² + (${a} x ${b}) - ${c} = ?`;
+                correctAnswer = (sq * sq) + (a * b) - c;
+            } else {
+                // Ultimate Pro: BODMAS Long Chain
+                display.innerText = `(${a} + ${c}) x ${b} - (${n} x 2) + 10 = ?`;
+                correctAnswer = ((a + c) * b) - (n * 2) + 10;
+            }
+        }
+
+        function checkAnswer() {
+            let userAns = parseInt(document.getElementById('ans-input').value);
+            if(userAns === correctAnswer) {
+                playSfx('win'); state.coins += 20;
+                if(currentLvl === state.maxLvl) state.maxLvl++;
+                save(); alert("Genius! Sahi Jawab. 🔥"); switchTab('levels');
+            } else {
+                playSfx('error'); alert("Galat! Thoda dhyan se calculate karein. 🧠");
+            }
+        }
+
+        function claimDaily() {
+            if(Date.now() - state.lastDaily > 86400000) {
+                state.coins += 50; state.lastDaily = Date.now();
+                save(); playSfx('win'); alert("50 Coins Mil Gaye!");
+            } else { alert("Wait for 24h!"); }
+        }
+
+        function skipLevel() {
+            if(state.coins >= 100) {
+                state.coins -= 100; state.maxLvl++; save(); switchTab('levels');
+            } else { alert("Coins kam hain!"); }
+        }
+
+        async function shareChallenge() {
+            const msg = `Upgrade your brainpower with the ultimate Maths Puzzle Challenge. 🚀\nLogic aur speed ka perfect combo. Kya aap saare levels unlock kar sakte hain?\n\n✅ Fast-paced gameplay\n✅ Modern Dark Mode UI\n✅ Level-wise Difficulty\n\nDownload Now & Start Solving! 👇\n${window.location.href}`;
+            if (navigator.share) {
+                try { await navigator.share({ title: 'Math Ninja Pro', text: msg, url: window.location.href }); } catch(e) {}
+            } else {
+                try {
+                    if (navigator.clipboard) { await navigator.clipboard.writeText(msg); alert("Challenge Copied!"); }
+                    else { window.prompt("Copy message:", msg); }
+                } catch(err) { window.prompt("Copy message:", msg); }
+            }
+        }
+
+        function resetGame() { if(confirm("Reset all data?")) { localStorage.clear(); location.reload(); } }
+        save();
+    </script>
+</body>
+</html>
